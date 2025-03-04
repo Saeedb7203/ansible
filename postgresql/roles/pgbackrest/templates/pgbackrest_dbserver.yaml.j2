@@ -1,0 +1,23 @@
+[global]
+repo1-host={{ groups['pg_servers'][0] if groups['pg_servers'] | length > 0 else '' }}
+repo1-host-user=postgres
+repo1-host-type=tls
+repo1-host-cert-file={{ca_path}}/{{node_name}}.crt
+repo1-host-key-file={{ca_path}}/{{node_name}}.key
+repo1-host-ca-file={{ca_path}}/ca.crt
+
+# general options
+process-max=16
+log-level-console=info
+log-level-file=debug
+
+# tls server options
+tls-server-address=*
+tls-server-cert-file={{ca_path}}/{{node_name}}.crt
+tls-server-key-file={{ca_path}}/{{node_name}}.key
+tls-server-ca-file={{ca_path}}/ca.crt
+tls-server-auth={{ groups['pg_servers'][0] if groups['pg_servers'] | length > 0 else '' }}={{scope}}
+
+[{{scope}}]
+pg1-path=/var/lib/postgresql/{{version}}/main
+pg1-port={{postgres_port}}

@@ -1,0 +1,27 @@
+- name: Ensure recursive ownership of certs directory
+  ansible.builtin.file:
+    path: "{{ ca_path }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    recurse: yes
+
+- name: Copy pgBackRest role files to certs directory
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ ca_path }}"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/pgbackrest/files/ca.*"
+
+- name: Copy node-specific pgBackRest files to certs directory
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ ca_path }}"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/pgbackrest/files/{{ node_name }}.*"

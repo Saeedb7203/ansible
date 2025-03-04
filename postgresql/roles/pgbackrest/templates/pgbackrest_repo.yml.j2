@@ -1,0 +1,75 @@
+[global]
+
+# Server repo details
+
+{% if backup_type == "local" %}
+# Local Repository Configuration
+repo1-type=posix
+repo1-path={{pgbackRest_dir}}
+{% elif backup_type == "s3" %}
+# S3 Repository Configuration
+repo1-type=s3
+repo1-s3-bucket={{ s3_bucket }}
+repo1-s3-endpoint={{ s3_endpoint }}
+repo1-storage-port={{ s3_port }}
+repo1-s3-key={{ s3_key }}
+repo1-s3-key-secret={{ s3_key_secret }}
+repo1-s3-region={{ s3_region }}
+repo1-s3-verify-tls={{verify_tls}}
+repo1-s3-uri-style={{uri_style}}
+{% endif %}
+
+repo1-compress={{ compress_type | default('gz') }}
+
+### Retention ###
+#  - repo1-retention-archive-type
+#  - If set to full pgBackRest will keep archive logs for the number of full backups defined by repo-retention-archive
+repo1-retention-archive-type=full
+
+# repo1-retention-archive
+#  - Number of backups worth of continuous WAL to retain
+#  - NOTE: WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured
+# repo1-retention-archive=2
+
+# repo1-retention-full
+#  - Full backup retention count/time.
+#  - When a full backup expires, all differential and incremental backups associated with the full backup will also expire.
+#  - When the option is not defined a warning will be issued.
+#  - If indefinite retention is desired then set the option to the max value.
+repo1-retention-full=4
+
+# Server general options
+process-max=12
+log-level-console=info
+#log-level-file=debug
+log-level-file=info
+start-fast=y
+delta=y
+backup-standby=y
+
+########## Server TLS options ##########
+tls-server-address=*
+tls-server-cert-file={{ca_path}}/{{ node_name }}.crt
+tls-server-key-file={{ca_path}}/{{ node_name }}.key
+tls-server-ca-file={{ca_path}}/ca.crt
+
+### Auth entry ###
+{% for host in groups['db_servers'] %}
+tls-server-auth={{ hostvars[host]['inventory_hostname'] }}={{ scope }}
+{% endfor %}
+
+### Clusters and nodes ###
+[{{ scope }}]
+
+{% for host in groups['db_servers'] %}
+pg{{ loop.index }}-host={{ hostvars[host]['inventory_hostname'] }}
+pg{{ loop.index }}-host-port=8432
+pg{{ loop.index }}-port={{ postgres_port }}
+pg{{ loop.index }}-path=/var/lib/postgresql/{{ version }}/main
+pg{{ loop.index }}-host-type=tls
+pg{{ loop.index }}-host-cert-file={{ca_path}}/{{pgbrepo_node_name}}.crt
+pg{{ loop.index }}-host-key-file={{ca_path}}/{{pgbrepo_node_name}}.key
+pg{{ loop.index }}-host-ca-file={{ca_path}}/ca.crt
+pg{{ loop.index }}-socket-path=/var/run/postgresql
+
+{% endfor %}

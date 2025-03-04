@@ -1,0 +1,20 @@
+- name: install curl
+  apt:
+    name: curl
+  # environment: "{{proxy_env}}"
+- name: curl packages
+  command: curl -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+  # environment: "{{proxy_env}}"
+
+- name: install dependencies
+  command: apt install -y gnupg2 lsb-release ./percona-release_latest.generic_all.deb
+  # environment: "{{proxy_env}}"
+
+- name: update repository index (Ubuntu)
+  tags: always
+  apt:
+    update_cache: yes
+  changed_when: false
+  when: ansible_distribution == "Ubuntu"
+  # environment: "{{proxy_env}}"
+

@@ -1,0 +1,57 @@
+- name: install pgbouncer
+  apt:
+    name: pgbouncer
+  when: ansible_distribution == "Ubuntu" and percona_package_install
+  # environment: "{{proxy_env}}"
+
+- name: Create pgbouncer user
+  community.postgresql.postgresql_user:
+    login_user: postgres
+    login_password: "{{postgres_pass}}"
+    login_host: localhost
+    login_port: "{{postgres_port}}"
+    name: "{{pgbouncer_user}}"
+    password: "{{pgbouncer_pass}}"
+    role_attr_flags: CREATEDB,CREATEROLE,SUPERUSER
+  ignore_errors: true
+- name: Setup PgBouncer Authentication in a Single Query
+  community.postgresql.postgresql_query:
+    db: postgres
+    login_user: postgres
+    login_password: "{{postgres_pass}}"
+    login_port: "{{postgres_port}}"
+    login_host: localhost
+    query: |
+      -- Create schema if not exists
+      CREATE SCHEMA IF NOT EXISTS pgbouncer;
+
+      -- Create or replace authentication function
+      CREATE OR REPLACE FUNCTION pgbouncer.get_auth(username TEXT)
+      RETURNS TABLE(username TEXT, password TEXT) AS
+      $$
+          SELECT usename::TEXT, passwd::TEXT 
+          FROM pg_shadow WHERE usename = username;
+      $$
+      LANGUAGE SQL SECURITY DEFINER;
+
+      -- Grant permissions to 'pgbouncer' role
+      GRANT EXECUTE ON FUNCTION pgbouncer.get_auth(username TEXT) TO pgbouncer;
+      GRANT USAGE ON SCHEMA pgbouncer TO {{pgbouncer_user}};
+  ignore_errors: yes
+  
+- name: delete old Config
+  shell: rm /etc/pgbouncer/*
+
+- name: copy user list
+  tags: pgbouncer
+  template:
+    src: userlist.txt.j2
+    dest: /etc/pgbouncer/userlist.txt
+
+- name: Config pgbouncer
+  tags: pgbouncer
+  template:
+    src: pgbouncer.ini.j2
+    dest: /etc/pgbouncer/pgbouncer.ini
+- name: start pgbouncer server
+  service: name=pgbouncer state=restarted

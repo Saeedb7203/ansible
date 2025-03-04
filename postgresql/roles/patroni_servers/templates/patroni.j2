@@ -1,0 +1,116 @@
+namespace: {{namespace}}
+scope: {{scope}}
+name: {{node_name}}
+
+restapi:
+    listen: 0.0.0.0:{{postgres_rest_port}}
+    connect_address: {{node_ip}}:{{postgres_rest_port}}
+
+etcd3:
+    host: {{node_ip}}:{{etcd_client_port}}
+
+bootstrap:
+  # this section will be written into Etcd:/<namespace>/<scope>/config after initializing new cluster
+  dcs:
+      ttl: 30
+      loop_wait: 10
+      retry_timeout: 10
+      maximum_lag_on_failover: 1048576
+
+      postgresql:
+          use_pg_rewind: true
+          use_slots: true
+          parameters:
+              log_directory: {{log_directory}}
+              log_filename: {{log_filename}}
+
+              max_connections: 1000
+              wal_level: replica
+              hot_standby: "on"
+              wal_keep_segments: 10
+              max_wal_senders: 5
+              max_replication_slots: 10
+              wal_log_hints: "on"
+
+              logging_collector: 'on'
+
+              log_destination: 'syslog'
+              log_file_mode: '0600'
+              log_truncate_on_rotation: 'on'
+              log_rotation_age: '1h'
+              log_rotation_size: '1GB'
+              syslog_sequence_numbers: 'on'
+              syslog_split_messages: 'on'
+              log_min_messages: 'warning'
+              log_min_error_statement: 'error'
+              debug_print_parse: 'off'
+              debug_print_rewritten: 'off'
+              debug_print_plan: 'off'
+              debug_pretty_print: 'on'
+              log_connections: 'on'
+              log_disconnections: 'on'
+
+              max_wal_size: '10GB'
+              archive_mode: "on"
+              archive_timeout: 600s
+              archive_command: 'pgbackrest --stanza=cluster_1 archive-push /var/lib/postgresql/{{version}}/main/pg_wal/%f'
+
+  # some desired options for 'initdb'
+  initdb: 
+      - encoding: UTF8
+      - data-checksums
+
+  # Some additional users which needs to be created after initializing new cluster
+  users:
+      admin:
+          password: {{postgres_pass}}
+          options:
+              - createrole
+              - createdb
+      percona:
+          password: {{postgres_pass}}
+          options:
+              - createrole
+              - createdb 
+
+postgresql:
+    cluster_name: cluster_1
+    listen: 0.0.0.0:{{postgres_port}}
+    connect_address: {{node_ip}}:{{postgres_port}}
+    data_dir: {{data_dir}}
+    bin_dir: {{pg_bin_dir}}
+    pgpass: /tmp/pgpass0
+    authentication:
+        replication:
+            username: replicator
+            password: {{repluser_pass}}
+        superuser:
+            username: postgres
+            password: {{postgres_pass}}
+    parameters:
+        unix_socket_directories: "/var/run/postgresql/"
+        ssl: 'on'
+        ssl_cert_file: '{{ca_path}}/{{node_name}}.crt'
+        ssl_key_file: '{{ca_path}}/{{node_name}}.key'
+        ssl_ca_file: '{{ca_path}}/ca.crt'
+    # Updated pg_hba configuration: removed defaults and applied custom settings
+    pg_hba:
+      - local all postgres peer
+      - local all replicator peer
+      - local all postgres  scram-sha-256
+      - hostssl replication replicator 0.0.0.0/0 scram-sha-256 clientcert=verify-ca
+      - host replication replicator 0.0.0.0/0 scram-sha-256
+      - host all all 0.0.0.0/0 scram-sha-256
+      - hostssl all all 0.0.0.0/0 scram-sha-256 clientcert=verify-ca
+      - host all all ::0/0 scram-sha-256
+
+    create_replica_methods:
+        - basebackup
+    basebackup:
+        checkpoint: 'fast'
+
+tags:
+    nofailover: false
+    noloadbalance: false
+    clonefrom: false
+    nosync: false

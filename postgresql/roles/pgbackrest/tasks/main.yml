@@ -1,0 +1,15 @@
+- name: Include createcert tasks
+  include_tasks: createcert.yml
+  when: run_createcert| default(true)
+
+- name: Include copycerts tasks
+  include_tasks: copycerts.yml
+  when: run_copycerts | default(true)
+
+- name: Include configuration tasks
+  include_tasks: pgbconfig.yml
+  when: run_cpgbconfig | default(true)
+
+- name: Include configuration tasks
+  include_tasks: pgserverconfig.yml
+  when: run_pgserverconfig | default(true)

@@ -1,0 +1,40 @@
+- name: Create the certificates and keys
+  shell: openssl req -new -x509 -days 365 -nodes -out {{ playbook_dir }}/roles/pgbackrest/files/ca.crt -keyout {{ playbook_dir }}/roles/pgbackrest/files/ca.key -subj "/CN=root-ca"
+  args:
+    creates: 
+      - "{{ playbook_dir }}/roles/pgbackrest/files/ca.key"
+      - "{{ playbook_dir }}/roles/pgbackrest/files/ca.crt"
+
+- name: Create the certificate for the backup and the PostgreSQL servers
+  shell: |
+    for node in {% for host in groups['db_servers'] + groups['pg_servers'] %}{{ hostvars[host]['inventory_hostname'] }} {% endfor %}; do
+      openssl req -new -nodes -out {{ playbook_dir }}/roles/pgbackrest/files/$node.csr -keyout {{ playbook_dir }}/roles/pgbackrest/files/$node.key -subj "/CN=$node";
+    done
+  args:
+    creates: >
+      {% for host in groups['db_servers'] + groups['pg_servers'] %}
+      {{ playbook_dir }}/roles/pgbackrest/files/{{ hostvars[host]['inventory_hostname'] }}.csr,
+      {{ playbook_dir }}/roles/pgbackrest/files/{{ hostvars[host]['inventory_hostname'] }}.key{% if not loop.last %},{% endif %}
+      {% endfor %}
+
+- name: Create the certificate for the backup and the PostgreSQL servers (signing)
+  shell: |
+    for node in {% for host in groups['db_servers'] + groups['pg_servers'] %}{{ hostvars[host]['inventory_hostname'] }} {% endfor %}; do
+      openssl x509 -req -in {{ playbook_dir }}/roles/pgbackrest/files/$node.csr -days 365 -CA {{ playbook_dir }}/roles/pgbackrest/files/ca.crt -CAkey {{ playbook_dir }}/roles/pgbackrest/files/ca.key -CAcreateserial -out {{ playbook_dir }}/roles/pgbackrest/files/$node.crt;
+    done
+  args:
+    creates: >
+      {% for host in groups['db_servers'] + groups['pg_servers'] %}
+      {{ playbook_dir }}/roles/pgbackrest/files/{{ hostvars[host]['inventory_hostname'] }}.csr,
+      {{ playbook_dir }}/roles/pgbackrest/files/{{ hostvars[host]['inventory_hostname'] }}.crt{% if not loop.last %},{% endif %}
+      {% endfor %}
+
+- name: Change access mode for all certificates and keys
+  shell: chmod 777 -R {{ playbook_dir }}/roles/pgbackrest/files/*
+
+- name: Remove CSR files after certificate creation
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob:
+    - "{{ playbook_dir }}/roles/pgbackrest/files/*.csr"

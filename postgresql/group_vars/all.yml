@@ -1,0 +1,80 @@
+
+#configuration vars true or false
+create_certs: false
+base_package_install: false
+percona_package_install: false
+install_etcd: false
+install_patroni: true
+install_haservers: true
+pgbouncer_install: true
+set_hapgbouncer_port: false
+enable_pgbackrest: true
+
+
+#nodes Information
+node_name: "{{ ansible_facts['hostname'] }}"
+node_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
+
+node1_name: "{{ groups['db_servers'][0] if groups['db_servers'] | length > 0 else '' }}"
+node2_name: "{{ groups['db_servers'][1] if groups['db_servers'] | length > 1 else '' }}"
+node3_name: "{{ groups['db_servers'][2] if groups['db_servers'] | length > 2 else '' }}"
+node1_ip: "{{ hostvars[groups['db_servers'][0]].ansible_host }}"
+node2_ip: "{{ hostvars[groups['db_servers'][1]].ansible_host }}"
+node3_ip: "{{ hostvars[groups['db_servers'][2]].ansible_host }}"
+
+pgbrepo_node_name: "{{ groups['pg_servers'][0] if groups['pg_servers'] | length > 0 else '' }}"
+pgbrepo_node_ip: "{{ hostvars[groups['pg_servers'][0]].ansible_host }}"
+
+#patroni,postgres,pgbackrest and haproxy vars
+version: 17
+etcd_data: /var/lib/etcd
+cluster_token: PostgreSQL_HA_Cluster_1
+cluster_state: new
+data_dir: "/var/lib/postgresql/{{version}}/main"
+pg_bin_dir: "/usr/lib/postgresql/{{version}}/bin"
+ca_path: /etc/ssl/certs/pg_ha
+log_directory: '/var/log/postgresql/'
+log_filename: 'postgresql-%Y%m%d.log'
+namespace: "percona_lab"
+scope: "cluster_1"
+
+#backup vars
+backup_type: local    #local or s3
+##############
+compress_type: gz
+#s3
+
+s3_bucket: 
+s3_endpoint: 
+s3_key: 
+s3_key_secret: 
+s3_port: 
+s3_region: local
+verify_tls: n         # y or n
+uri_style: path
+#local
+
+pgbackRest_dir: /var/lib/pgbackrest
+##############
+
+#postgres and pgbouncer users
+
+postgres_pass: postgres_pass
+repluser_pass: repluser_pass
+
+pgbouncer_user: pgbouncer
+pgbouncer_pass: pgbouncer_pass
+
+#etcd, postgres,pgbouncer and ha proxy ports
+postgres_port: 5432
+pgbouncer_port: 6432
+postgres_rest_port: 8008
+primary_port: 5000
+repl_port: 5001
+stat_port: 7000
+etcd_client_port: 2379
+etcd_comm_port: 2380
+#proxy
+proxy_env:
+  http_proxy: 
+  https_proxy: 

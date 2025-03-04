@@ -1,0 +1,14 @@
+[db_servers]
+pg1 ansible_host=
+pg2 ansible_host=
+pg3 ansible_host=
+
+[ha_servers]
+ha1 ansible_host=
+ha2 ansible_host=
+
+[pg_servers]
+pg-repo1 ansible_host=
+
+[workstations]
+workstation1 ansible_host=localhost ansible_user= ansible_become_pass=

@@ -1,0 +1,60 @@
+---
+- hosts: all
+  become: true
+  gather_facts: yes
+  pre_tasks:
+    - name: Update repository index (Ubuntu)
+      tags: always
+      apt:
+        update_cache: yes
+      changed_when: false
+      when:
+        - ansible_distribution == "Ubuntu"
+        - base_package_install
+        - "'workstation' not in group_names "
+
+  tasks:
+    - name: Include base role if installation is enabled
+      include_role:
+        name: base
+      when: base_package_install and 'workstations' not in group_names
+
+    - name: Include etcd_servers role if installation is enabled
+      include_role:
+        name: etcd_servers
+      when: install_etcd and 'db_servers' in group_names
+
+    - name: Include patroni_servers role if installation is enabled
+      include_role:
+        name: patroni_servers
+      when: install_patroni and 'db_servers' in group_names
+
+    - name: Include ha_servers role if installation is enabled
+      include_role:
+        name: ha_servers
+      when: install_haservers and 'ha_servers' in group_names
+
+    - name: Include pgbouncer role if installation is enabled
+      include_role:
+        name: pgbouncer
+      when: pgbouncer_install and 'db_servers' in group_names
+
+    - name: Replace Postgres-port with Pgbouncer-port in HA configuration
+      replace:
+        path: /etc/haproxy/haproxy.cfg
+        regexp: "(:){{ postgres_port }}"
+        replace: ":{{ pgbouncer_port }}"
+      when: set_hapgbouncer_port and 'ha_servers' in group_names
+
+    - name: Create certs in workstation
+      include_role:
+        name: pgbackrest
+        tasks_from: createcert
+      when: create_certs and 'workstations' in group_names
+
+    - name: Install and configure pgbackrest
+      include_tasks: pgbackrest.yml
+      when:
+        - enable_pgbackrest
+        - "'workstations' not in group_names"
+        - "'ha_servers' not in group_names"

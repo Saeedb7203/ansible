@@ -1,0 +1,48 @@
+
+
+- name: Include base role if installation is enabled
+  include_role:
+    name: base
+  when:
+    - ansible_distribution == "Ubuntu"
+    - base_package_install
+    
+- name: install Percona-release package 
+  tags: postgres,pgbackrest
+  command: percona-release setup ppg{{version}}
+  when: ansible_distribution == "Ubuntu" and percona_package_install
+
+# install Percona PgBackrest package 
+- name: Install some Python and auxiliary packages and PgBackrest
+  tags: python,pgbackrest
+  apt:
+    name:
+    - python3-pip
+    - python3-dev
+    - binutils
+    - percona-pgbackrest
+  when: ansible_distribution == "Ubuntu" and percona_package_install
+
+- name: Create certs in workstation
+  include_role:
+    name: pgbackrest
+    tasks_from: createcert
+  when: " 'workstations' in group_names and create_certs"
+
+- name: Copy certs to hosts
+  include_role:
+    name: pgbackrest
+    tasks_from: copycerts
+  when: "'pg_servers' in group_names"
+
+- name: Config pgbackrest on db servers pgbackrest
+  include_role:
+    name: pgbackrest
+    tasks_from: pgdbserverconfig
+  when: "'db_servers' in group_names"
+
+- name: config pgbackrest on pgbackrest repo server
+  include_role:
+    name: pgbackrest
+    tasks_from: pgbrepoconfig
+  when: "'pg_servers' in group_names"
