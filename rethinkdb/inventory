@@ -1,0 +1,4 @@
+[db_servers]
+db1 ansible_host=172.16.2.200
+db2 ansible_host=172.16.2.201
+db3 ansible_host=172.16.2.202

@@ -1,17 +1,3 @@
-
-# Add nodes to /etc/hosts
-- name: Add multiple entries to /etc/hosts
-  blockinfile:
-    path: /etc/hosts
-    block: |
-      {{node1_ip}} {{node1_name}}
-      {{node2_ip}} {{node2_name}}
-      {{node3_ip}} {{node3_name}}
-      {{node_ip}} {{node_name}}
-      {{pgbrepo_node_ip}} {{pgbrepo_node_name}}
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - HOSTS"
-    state: present
-
 # Ensure datapath directory exists pgBackRest repository
 
 - name: Ensure pgBackRest repository datapath directory exists

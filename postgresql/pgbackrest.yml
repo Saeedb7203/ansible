@@ -23,17 +23,12 @@
     - percona-pgbackrest
   when: ansible_distribution == "Ubuntu" and percona_package_install
 
-- name: Create certs in workstation
-  include_role:
-    name: pgbackrest
-    tasks_from: createcert
-  when: " 'workstations' in group_names and create_certs"
 
 - name: Copy certs to hosts
   include_role:
     name: pgbackrest
     tasks_from: copycerts
-  when: "'pg_servers' in group_names"
+  when: "'pgbr_servers' in group_names"
 
 - name: Config pgbackrest on db servers pgbackrest
   include_role:
@@ -45,4 +40,4 @@
   include_role:
     name: pgbackrest
     tasks_from: pgbrepoconfig
-  when: "'pg_servers' in group_names"
+  when: "'pgbr_servers' in group_names"

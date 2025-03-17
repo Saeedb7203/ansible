@@ -1,13 +1,13 @@
 namespace: {{namespace}}
 scope: {{scope}}
-name: {{node_name}}
+name: {{ansible_hostname}}
 
 restapi:
     listen: 0.0.0.0:{{postgres_rest_port}}
-    connect_address: {{node_ip}}:{{postgres_rest_port}}
+    connect_address: {{ ansible_facts['default_ipv4']['address'] }}:{{postgres_rest_port}}
 
 etcd3:
-    host: {{node_ip}}:{{etcd_client_port}}
+    host: {{ ansible_facts['default_ipv4']['address'] }}:{{etcd_client_port}}
 
 bootstrap:
   # this section will be written into Etcd:/<namespace>/<scope>/config after initializing new cluster
@@ -53,7 +53,7 @@ bootstrap:
               max_wal_size: '10GB'
               archive_mode: "on"
               archive_timeout: 600s
-              archive_command: 'pgbackrest --stanza=cluster_1 archive-push /var/lib/postgresql/{{version}}/main/pg_wal/%f'
+              archive_command: 'pgbackrest --stanza={{scope}} archive-push /var/lib/postgresql/{{version}}/main/pg_wal/%f'
 
   # some desired options for 'initdb'
   initdb: 
@@ -74,9 +74,9 @@ bootstrap:
               - createdb 
 
 postgresql:
-    cluster_name: cluster_1
+    cluster_name: {{scope}}
     listen: 0.0.0.0:{{postgres_port}}
-    connect_address: {{node_ip}}:{{postgres_port}}
+    connect_address: {{ ansible_facts['default_ipv4']['address'] }}:{{postgres_port}}
     data_dir: {{data_dir}}
     bin_dir: {{pg_bin_dir}}
     pgpass: /tmp/pgpass0
@@ -88,10 +88,11 @@ postgresql:
             username: postgres
             password: {{postgres_pass}}
     parameters:
+        shared_preload_libraries: 'pgaudit,pg_stat_monitor'
         unix_socket_directories: "/var/run/postgresql/"
         ssl: 'on'
-        ssl_cert_file: '{{ca_path}}/{{node_name}}.crt'
-        ssl_key_file: '{{ca_path}}/{{node_name}}.key'
+        ssl_cert_file: '{{ca_path}}/{{ansible_hostname}}.crt'
+        ssl_key_file: '{{ca_path}}/{{ansible_hostname}}.key'
         ssl_ca_file: '{{ca_path}}/ca.crt'
     # Updated pg_hba configuration: removed defaults and applied custom settings
     pg_hba:

@@ -1,0 +1,9 @@
+base_package_install: true
+data_directory: /var/lib/rethinkdb/data/
+log_dir: /var/log/rethinkdb/
+log_file: rethink.log
+bind: all
+driver_port: 28015
+cluster_port: 29015
+http_port: 8080
+join_node: "{{ hostvars[groups['db_servers'][0]]['ansible_hostname'] }}"

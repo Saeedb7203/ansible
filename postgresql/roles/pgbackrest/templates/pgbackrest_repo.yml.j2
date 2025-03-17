@@ -49,26 +49,26 @@ backup-standby=y
 
 ########## Server TLS options ##########
 tls-server-address=*
-tls-server-cert-file={{ca_path}}/{{ node_name }}.crt
-tls-server-key-file={{ca_path}}/{{ node_name }}.key
+tls-server-cert-file={{ca_path}}/{{ansible_hostname}}.crt
+tls-server-key-file={{ca_path}}/{{ansible_hostname}}.key
 tls-server-ca-file={{ca_path}}/ca.crt
 
 ### Auth entry ###
 {% for host in groups['db_servers'] %}
-tls-server-auth={{ hostvars[host]['inventory_hostname'] }}={{ scope }}
+tls-server-auth={{ hostvars[host]['ansible_hostname'] }}={{ scope }}
 {% endfor %}
 
 ### Clusters and nodes ###
 [{{ scope }}]
 
 {% for host in groups['db_servers'] %}
-pg{{ loop.index }}-host={{ hostvars[host]['inventory_hostname'] }}
+pg{{ loop.index }}-host={{ hostvars[host]['ansible_hostname'] }}
 pg{{ loop.index }}-host-port=8432
 pg{{ loop.index }}-port={{ postgres_port }}
 pg{{ loop.index }}-path=/var/lib/postgresql/{{ version }}/main
 pg{{ loop.index }}-host-type=tls
-pg{{ loop.index }}-host-cert-file={{ca_path}}/{{pgbrepo_node_name}}.crt
-pg{{ loop.index }}-host-key-file={{ca_path}}/{{pgbrepo_node_name}}.key
+pg{{ loop.index }}-host-cert-file={{ca_path}}/{{ansible_hostname}}.crt
+pg{{ loop.index }}-host-key-file={{ca_path}}/{{ansible_hostname}}.key
 pg{{ loop.index }}-host-ca-file={{ca_path}}/ca.crt
 pg{{ loop.index }}-socket-path=/var/run/postgresql
 

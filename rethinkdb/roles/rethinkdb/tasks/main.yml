@@ -1,0 +1,41 @@
+- name: Update /etc/hosts with inventory IPs and hostnames
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {% for host in groups['all'] %}
+      {{ hostvars[host]['ansible_host'] }} {{ hostvars[host]['ansible_hostname'] }}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - HOSTS"
+    state: present
+
+- name: Ensure recursive ownership of data directory
+  ansible.builtin.file:
+    path: "{{ data_directory }}"
+    state: directory
+    owner: rethinkdb
+    group: rethinkdb
+    recurse: yes
+
+- name: Ensure recursive ownership of log file
+  ansible.builtin.file:
+    path: "{{ log_dir }}"
+    state: directory
+    owner: rethinkdb
+    group: rethinkdb
+    recurse: yes
+
+- name: rethinkdb configs
+  # tags: rethinkdb
+  template:
+    src: config.j2
+    dest: /etc/rethinkdb/instances.d/instance.conf
+
+- name: rethinkdb services
+  # tags: rethinkdb
+  template:
+    src: rethinkdb@.service.j2
+    dest: /usr/lib/systemd/system/rethinkdb@.service
+
+- name: start rethinkdb server
+  service: name=rethinkdb state=started enabled=true daemon_reload=true
+  register: start_output

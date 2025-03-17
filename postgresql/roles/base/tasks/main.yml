@@ -1,15 +1,20 @@
-- name: install curl
-  apt:
-    name: curl
-  # environment: "{{proxy_env}}"
-- name: curl packages
-  command: curl -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
-  # environment: "{{proxy_env}}"
+# - name: install curl
+#   apt:
+#     name: curl
+#   # environment: "{{proxy_env}}"
+# - name: curl packages
+#   command: curl -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+#   # environment: "{{proxy_env}}"
 
 - name: install dependencies
-  command: apt install -y gnupg2 lsb-release ./percona-release_latest.generic_all.deb
+  command: apt install -y python3-pip  # gnupg2 lsb-release python3-pip ./percona-release_latest.generic_all.deb
   # environment: "{{proxy_env}}"
 
+
+- name: Install psycopg2 python package
+  command: pip install psycopg2-binary
+
+  # environment: "{{proxy_env}}"
 - name: update repository index (Ubuntu)
   tags: always
   apt:
@@ -18,3 +23,14 @@
   when: ansible_distribution == "Ubuntu"
   # environment: "{{proxy_env}}"
 
+
+# Add nodes to /etc/hosts
+- name: Update /etc/hosts with inventory IPs and hostnames
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {% for host in groups['all'] %}
+      {{ hostvars[host]['ansible_host'] }} {{ hostvars[host]['ansible_hostname'] }}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - HOSTS"
+    state: present

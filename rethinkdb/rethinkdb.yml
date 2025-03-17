@@ -1,0 +1,24 @@
+
+- hosts: all
+  become: true
+  gather_facts: true
+  pre_tasks:
+    - name: Update repository index (Ubuntu)
+      tags: always
+      apt:
+        update_cache: yes
+      changed_when: false
+      when:
+        - ansible_distribution == "Ubuntu"
+  tasks:
+    - name: Include base role if installation is enabled
+      include_role:
+        name: base
+      when: base_package_install 
+
+    - name: Include rethinkdb role if installation is enabled
+      include_role:
+        name: rethinkdb
+      when: base_package_install 
+
+  

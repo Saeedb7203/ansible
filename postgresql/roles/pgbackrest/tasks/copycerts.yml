@@ -24,4 +24,4 @@
     group: postgres
     mode: "0600"
   with_fileglob:
-    - "{{ playbook_dir }}/roles/pgbackrest/files/{{ node_name }}.*"
+    - "{{ playbook_dir }}/roles/pgbackrest/files/{{ ansible_facts['default_ipv4']['address'] }}.*"

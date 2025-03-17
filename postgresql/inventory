@@ -1,14 +1,14 @@
 [db_servers]
-pg1 ansible_host=
-pg2 ansible_host=
-pg3 ansible_host=
+pg1 ansible_host=172.16.2.190
+pg2 ansible_host=172.16.2.191
+pg3 ansible_host=172.16.2.192
 
 [ha_servers]
-ha1 ansible_host=
-ha2 ansible_host=
+ha1 ansible_host=172.16.2.193
+ha2 ansible_host=172.16.2.194
 
-[pg_servers]
-pg-repo1 ansible_host=
+[pgbr_servers]
+pg-backrest ansible_host=172.16.2.195
 
 [workstations]
-workstation1 ansible_host=localhost ansible_user= ansible_become_pass=
+localhost ansible_host=localhost ansible_port=22

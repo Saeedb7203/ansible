@@ -1,0 +1,23 @@
+- name: Download RethinkDB public key
+  ansible.builtin.get_url:
+    url: https://download.rethinkdb.com/repository/raw/pubkey.gpg
+    dest: /tmp/rethinkdb-pubkey.gpg
+    mode: '0644'
+
+- name: Convert and move RethinkDB public key
+  ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/rethinkdb-archive-keyrings.gpg /tmp/rethinkdb-pubkey.gpg
+  args:
+    creates: /usr/share/keyrings/rethinkdb-archive-keyrings.gpg  # Skip if file exists
+
+- name: Add the repository.
+  shell: echo "deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg] https://download.rethinkdb.com/repository/ubuntu-$(lsb_release -cs) $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
+
+- name: Update repository index (Ubuntu)
+  tags: always
+  apt:
+    update_cache: yes
+
+- name: Update repository index (Ubuntu)
+  tags: always
+  apt:
+    name: rethinkdb

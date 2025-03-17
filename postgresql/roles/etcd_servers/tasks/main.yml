@@ -1,18 +1,8 @@
-- name: Update /etc/hosts with inventory IPs and hostnames
-  blockinfile:
-    path: /etc/hosts
-    block: |
-      {% for host in groups['all'] %}
-      {{ hostvars[host]['ansible_host'] }} {{ hostvars[host]['inventory_hostname'] }}
-      {% endfor %}
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - HOSTS"
-    state: present
-
 - name: Generate etcd-cluster string dynamically
   set_fact:
     initial_cluster: >-
       {% for host in groups['db_servers'] -%}
-      {{ hostvars[host]['inventory_hostname'] }}=http://{{ hostvars[host]['ansible_host'] }}:{{ etcd_comm_port }}{% if not loop.last %},{% endif %}
+      {{ hostvars[host]['ansible_hostname'] }}=http://{{ hostvars[host]['ansible_host'] }}:{{ etcd_comm_port }}{% if not loop.last %},{% endif %}
       {%- endfor %}
 
 - name: install Percona-release package 
@@ -26,14 +16,16 @@
   tags: postgres,db,etcd,patroni
   apt:
     name:
-    - python3-pip
     - python3-dev
     - binutils
     - percona-patroni
     - etcd
     - etcd-server
     - etcd-client
+    - percona-postgresql-{{version}}
     - percona-pgbackrest
+    - percona-pg-stat-monitor{{version}}
+    - percona-postgresql-{{version}}-pgaudit
   # environment: "{{proxy_env}}"
   when: ansible_distribution == "Ubuntu" and percona_package_install
 

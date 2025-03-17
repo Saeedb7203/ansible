@@ -1,5 +1,14 @@
 ---
 - hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Create certs in workstation
+      include_role:
+        name: pgbackrest
+        tasks_from: createcert
+      when: create_certs and 'workstations' in group_names
+
+- hosts: db_servers, ha_servers, pgbr_servers
   become: true
   gather_facts: yes
   pre_tasks:
@@ -45,12 +54,6 @@
         regexp: "(:){{ postgres_port }}"
         replace: ":{{ pgbouncer_port }}"
       when: set_hapgbouncer_port and 'ha_servers' in group_names
-
-    - name: Create certs in workstation
-      include_role:
-        name: pgbackrest
-        tasks_from: createcert
-      when: create_certs and 'workstations' in group_names
 
     - name: Install and configure pgbackrest
       include_tasks: pgbackrest.yml
