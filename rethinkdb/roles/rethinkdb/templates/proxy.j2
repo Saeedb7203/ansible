@@ -1,0 +1,16 @@
+# RethinkDB Proxy Configuration
+{% for host in groups['db_servers'] %}
+join={{ hostvars[host]['ansible_hostname'] }}:{{ hostvars[host]['cluster_port'] }}
+{% endfor %}
+{% if driver_port is defined %}
+driver-port={{ driver_port }}
+{% endif %}
+{% if http_port is defined %}
+http-port={{ http_port }}
+{% endif %}
+bind=all
+{% if admin_password is defined and admin_password is not none and admin_password|length > 0 %}
+initial-password={{ admin_password }}
+{% else %}
+# initial-password not set
+{% endif %}

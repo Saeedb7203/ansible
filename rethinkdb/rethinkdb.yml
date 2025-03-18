@@ -19,6 +19,6 @@
     - name: Include rethinkdb role if installation is enabled
       include_role:
         name: rethinkdb
-      when: base_package_install 
+      when: rethinkdb_config
 
   

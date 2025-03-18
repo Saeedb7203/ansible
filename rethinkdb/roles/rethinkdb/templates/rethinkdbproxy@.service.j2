@@ -1,0 +1,12 @@
+[Unit]
+Description=RethinkDB Proxy server for instance '%i'
+
+[Service]
+User=rethinkdb
+Group=rethinkdb
+ExecStart=/usr/bin/rethinkdb proxy --config-file /etc/rethinkdb/instances.d/%i.conf
+KillMode=process
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

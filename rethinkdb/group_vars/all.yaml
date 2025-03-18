@@ -1,8 +1,10 @@
 base_package_install: true
+rethinkdb_config: true
 data_directory: /var/lib/rethinkdb/data/
 log_dir: /var/log/rethinkdb/
 log_file: rethink.log
 bind: all
+admin_password: adminpass
 driver_port: 28015
 cluster_port: 29015
 http_port: 8080

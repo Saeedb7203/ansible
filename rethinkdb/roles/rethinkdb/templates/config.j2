@@ -103,3 +103,8 @@ cache-size=100
 ## If not specified, it will be randomly chosen from a short list of names.
 
 server-name={{ansible_hostname}}
+{% if admin_password is defined and admin_password is not none and admin_password|length > 0 %}
+initial-password={{ admin_password }}
+{% else %}
+# initial-password not set
+{% endif %}
